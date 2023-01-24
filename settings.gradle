@@ -1,0 +1,5 @@
+rootProject.name = 'AnoDuels'
+include 'api'
+include 'common'
+include 'bukkit'
+

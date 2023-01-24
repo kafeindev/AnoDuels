@@ -1,0 +1,7 @@
+settings:
+
+  invite-duration: 1m
+  queue-duration: 1m
+
+  match:
+    expiration: 5m

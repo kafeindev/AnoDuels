@@ -1,0 +1,6 @@
+name: AnoDuels
+description: A duel plugin for Ano
+version: 1.0.0
+api-version: 1.13
+author: Kafein
+main: net.code4me.anoduels.bukkit.loader.BukkitPluginLoader

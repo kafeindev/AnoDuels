@@ -1,0 +1,58 @@
+language:
+
+  prefix: "&6AnoDuels &8»"
+
+  no-permission: "%prefix% &cYou don't have permission to do that."
+  no-player: "%prefix% &cYou must be a player to do that."
+
+  admin:
+    help-admin-message:
+      - ""
+      - "&6Duel Admin Commands:"
+      - "&e/duel-admin arena &7- &fManage arenas."
+      - "&e/duel-admin kit &7- &fManage kits."
+      - ""
+    arena:
+      help-arena-message:
+        - ""
+        - "&6Duel Admin Arena Commands:"
+        - "&e/duel-arena create <name> &7- &fCreate an arena."
+        - "&e/duel-arena delete <name> &7- &fDelete an arena."
+        - "&e/duel-arena list &7- &fList all arenas."
+        - "&e/duel-arena set-spawn <name> <1/2> &7- &fSet the spawn of an arena."
+        - "&e/duel-arena teleport <name> <1/2> &7- &fTeleport to the spawn of an arena."
+        - "&e/duel-arena set-bounds <name> &7- &fSet the bounds of an arena."
+        - "&e/duel-arena set-icon <name> &7- &fSet the icon of an arena."
+        - ""
+      create-message: "%prefix% &aYou have created the arena &f%name%&a."
+      delete-message: "%prefix% &aYou have deleted the arena &f%name%&a."
+      list-message: "%prefix% &aArenas: &f%arenas%"
+      set-spawn-message: "%prefix% &aYou have set the spawn &f%index% &aof the arena &f%name%&a."
+      teleport-message: "%prefix% &aYou have teleported to the spawn &f%index% &aof the arena &f%name%&a."
+      set-bounds-message: "%prefix% &aYou have set the bounds of the arena &f%name%&a."
+      set-icon-message: "%prefix% &aYou have set the icon of the arena &f%name%&a."
+      invalid-bounds-message: "%prefix% &cWorldEdit is required to set the bounds of an arena."
+      invalid-spawn-point-message: "%prefix% &cInvalid spawn point."
+      already-exists-message: "%prefix% &cAn arena with that name already exists."
+      does-not-exist-message: "%prefix% &cAn arena with that name does not exist."
+    kit:
+      help-kit-message:
+        - ""
+        - "&6Duel Admin Kit Commands:"
+        - "&e/duel-kit create <name> &7- &fCreate a kit."
+        - "&e/duel-kit delete <name> &7- &fDelete a kit."
+        - "&e/duel-kit list &7- &fList all kits."
+        - "&e/duel-kit get-contents <name> &7- &fGet the contents of a kit."
+        - "&e/duel-kit set-contents <name> &7- &fSet the contents of a kit."
+        - "&e/duel-kit stop-showing-contents &7- &fStop showing the contents."
+        - "&e/duel-kit set-icon <name> &7- &fSet the icon of a kit."
+        - ""
+      create-message: "%prefix% &aYou have created the kit &f%kit%&a."
+      delete-message: "%prefix% &aYou have deleted the kit &f%kit%&a."
+      list-message: "%prefix% &aKits: &f%kits%"
+      get-contents-message: "%prefix% &aThe contents of the kit &f%kit% &aare:"
+      set-contents-message: "%prefix% &aYou have set the contents of the kit &f%kit%&a."
+      set-icon-message: "%prefix% &aYou have set the icon of the kit &f%kit%&a."
+      empty-contents-message: "%prefix% &cThe contents of the kit &f%kit% &care empty."
+      already-exist-message: "%prefix% &cA kit with that name already exists."
+      does-not-exist-message: "%prefix% &cA kit with that name does not exist."
