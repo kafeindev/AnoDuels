@@ -7,19 +7,13 @@ menu:
   #close-sound: ""
 
   items:
-    normal_match:
-      material: "LAVA_BUCKET"
-      name: "&6&lNormal Match"
+    full_inventory:
+      material: "DIAMOND_HELMET"
+      name: "&6&lFull Inventory"
       lore:
-        - ""
-        - "&8- &7Can be played with any kit."
-        - ""
-        - "&7Click to select this duel type."
-    risky_match:
-      material: "LAVA_BUCKET"
-      name: "&6&lRisky Match"
+        - "&7Bet on the your full inventory."
+    item_selection:
+      material: "DIAMOND_SWORD"
+      name: "&6&lItem Selection"
       lore:
-        - ""
-        - "&8- &7Can't be played with any kit."
-        - ""
-        - "&7Click to select this duel type."
+        - "&7Bet on specific items in your inventory."

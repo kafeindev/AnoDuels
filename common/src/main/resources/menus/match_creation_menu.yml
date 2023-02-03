@@ -12,14 +12,12 @@ menu:
       name: "&6&lNormal Match"
       lore:
         - ""
-        - "&8- &7Can be played with any kit."
-        - ""
         - "&7Click to select this duel type."
     risky_match:
       material: "LAVA_BUCKET"
       name: "&6&lRisky Match"
       lore:
         - ""
-        - "&8- &7Can't be played with any kit."
+        - "&8- &7Bet your items on the match."
         - ""
         - "&7Click to select this duel type."

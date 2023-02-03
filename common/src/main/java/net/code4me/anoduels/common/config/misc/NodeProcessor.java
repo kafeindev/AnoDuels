@@ -26,13 +26,9 @@ package net.code4me.anoduels.common.config.misc;
 
 import com.google.common.reflect.TypeToken;
 import net.code4me.anoduels.api.component.LocationComponent;
-import net.code4me.anoduels.api.model.Arena;
-import net.code4me.anoduels.api.model.Kit;
 import net.code4me.anoduels.api.shape.Cuboid;
 import net.code4me.anoduels.common.config.adapter.CuboidAdapter;
 import net.code4me.anoduels.common.config.adapter.LocationComponentAdapter;
-import net.code4me.anoduels.common.config.adapter.arena.ArenaAdapter;
-import net.code4me.anoduels.common.config.adapter.kit.KitAdapter;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.gson.GsonConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
@@ -46,14 +42,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public final class NodeProcessor {
-    private static final int INDENT = 2;
-
     static {
         TypeSerializerCollection.defaults()
                 .register(TypeToken.of(LocationComponent.class), new LocationComponentAdapter())
-                .register(TypeToken.of(Cuboid.class), new CuboidAdapter())
-                .register(TypeToken.of(Arena.class), new ArenaAdapter())
-                .register(TypeToken.of(Kit.class), new KitAdapter());
+                .register(TypeToken.of(Cuboid.class), new CuboidAdapter());
     }
 
     @NotNull
@@ -122,7 +114,6 @@ public final class NodeProcessor {
     public static ConfigurationLoader<ConfigurationNode> createLoader(@NotNull File file) {
         return YAMLConfigurationLoader.builder()
                 .setFile(file)
-                .setIndent(INDENT)
                 .build();
     }
 
@@ -130,7 +121,6 @@ public final class NodeProcessor {
     public static ConfigurationLoader<ConfigurationNode> createLoader(@NotNull BufferedReader reader) {
         return YAMLConfigurationLoader.builder()
                 .setSource(() -> reader)
-                .setIndent(INDENT)
                 .build();
     }
 
@@ -138,7 +128,6 @@ public final class NodeProcessor {
     public static ConfigurationLoader<ConfigurationNode> createGsonLoader(@NotNull File file) {
         return GsonConfigurationLoader.builder()
                 .setFile(file)
-                .setIndent(INDENT)
                 .build();
     }
 
@@ -146,7 +135,6 @@ public final class NodeProcessor {
     public static ConfigurationLoader<ConfigurationNode> createGsonLoader(@NotNull BufferedReader reader) {
         return GsonConfigurationLoader.builder()
                 .setSource(() -> reader)
-                .setIndent(INDENT)
                 .build();
     }
 

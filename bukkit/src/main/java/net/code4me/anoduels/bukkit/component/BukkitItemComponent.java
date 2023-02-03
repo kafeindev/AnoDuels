@@ -2,24 +2,22 @@ package net.code4me.anoduels.bukkit.component;
 
 import com.cryptomorin.xseries.XEnchantment;
 import com.cryptomorin.xseries.XMaterial;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import de.tr7zw.nbtapi.NBTItem;
 import net.code4me.anoduels.api.component.ItemComponent;
-import net.code4me.anoduels.common.util.Base64Decoder;
+import net.code4me.anoduels.bukkit.util.Colorizer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,19 +27,12 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 public final class BukkitItemComponent implements ItemComponent<ItemStack> {
-    private static final LegacyComponentSerializer LEGACY_COMPONENT_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
-
     private static final BiFunction<String, Map<String, String>, String> REPLACE_FUNCTION = (s, map) -> {
         for (Map.Entry<String, String> entry : map.entrySet()) {
             s = s.replace(entry.getKey(), entry.getValue());
         }
         return s;
     };
-
-    @NotNull
-    public static ItemComponent<ItemStack> fromBase64(@NotNull String base64) {
-        return fromItemStack(Base64Decoder.decode(base64, ItemStack.class));
-    }
 
     @NotNull
     public static ItemComponent<ItemStack> fromNode(@NotNull ConfigurationNode node) {
@@ -51,22 +42,23 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
     @NotNull
     public static ItemComponent<ItemStack> fromNode(@NotNull ConfigurationNode node,
                                                     @NotNull Map<String, String> placeholders) {
-        return new BukkitItemComponent(node)
-                .setAmount(node)
+        return new BukkitItemComponent(node, placeholders)
                 .setCustomModelData(node)
                 .setName(node, placeholders)
                 .setLore(node, placeholders)
                 .setEnchantments(node)
                 .setFlags(node)
+                .glow(node)
                 .setUnbreakable(node)
                 .setSkullOwner(node)
                 .setHeadTexture(node)
-                .setNbt(node);
+                .setNbt(node)
+                .merge();
     }
 
     @NotNull
-    public static ItemComponent<ItemStack> fromItemStack(@NotNull ItemStack itemStack) {
-        return new BukkitItemComponent(itemStack);
+    public static ItemComponent<ItemStack> fromItemStack(@Nullable ItemStack itemStack) {
+        return new BukkitItemComponent(itemStack == null ? itemStack : itemStack.clone());
     }
 
     @NotNull
@@ -79,33 +71,35 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
         return new BukkitItemComponent(material, amount);
     }
 
-    @NotNull
+    @Nullable
     private final ItemStack itemStack;
 
-    @NotNull
+    @Nullable
     private final ItemMeta itemMeta;
 
-    @NotNull
-    private final NBTItem nbtItem;
+    private NBTItem nbtItem;
 
     private BukkitItemComponent(@NotNull ConfigurationNode node) {
-        this(node.getNode("material").getString(), node.getNode("amount").getInt());
+        this(node, ImmutableMap.of());
     }
 
-    private BukkitItemComponent(@NotNull ItemStack itemStack) {
+    private BukkitItemComponent(@NotNull ConfigurationNode node, @NotNull Map<String, String> placeholders) {
+        this(REPLACE_FUNCTION.apply(node.getNode("material").getString(), placeholders),
+                node.getNode("amount").isEmpty() ? 1 : node.getNode("amount").getInt());
+    }
+
+    private BukkitItemComponent(@Nullable ItemStack itemStack) {
         this.itemStack = itemStack;
-        this.itemMeta = itemStack.getItemMeta();
-        this.nbtItem = new NBTItem(itemStack);
+        this.itemMeta = itemStack == null ? null : itemStack.getItemMeta();
+
+        if (itemStack != null && itemStack.getAmount() > 0 && itemStack.getType() != Material.AIR) {
+            this.nbtItem = new NBTItem(itemStack);
+        }
     }
 
     private BukkitItemComponent(@NotNull String materialName, int amount) {
-        XMaterial material = XMaterial.matchXMaterial(materialName)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid material name: " + materialName));
-
-        this.itemStack = material.parseItem();
-        this.itemStack.setAmount(amount);
-        this.itemMeta = itemStack.getItemMeta();
-        this.nbtItem = new NBTItem(itemStack);
+        this(XMaterial.matchXMaterial(materialName)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid material name: " + materialName)), amount);
     }
 
     private BukkitItemComponent(@NotNull XMaterial material, int amount) {
@@ -116,21 +110,21 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
     }
 
     @Override
-    public @NotNull ItemStack getHandle() {
+    public @Nullable ItemStack getHandle() {
         return getHandle(true);
     }
 
     @Override
-    public @NotNull ItemStack getHandle(boolean merge) {
+    public @Nullable ItemStack getHandle(boolean merge) {
         if (merge) {
             merge();
         }
-        return itemStack;
+        return this.itemStack;
     }
 
     @Override
     public boolean isSimilar(@NotNull ItemComponent<?> itemComponent) {
-        return this.itemStack.isSimilar(((ItemComponent<ItemStack>) itemComponent).getHandle());
+        return this.itemStack != null && this.itemStack.isSimilar(((ItemComponent<ItemStack>) itemComponent).getHandle());
     }
 
     @Override
@@ -151,8 +145,8 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setAmount(@NotNull ConfigurationNode node) {
-        int amount = node.getNode("amount").getInt();
-        return setAmount(amount);
+        ConfigurationNode amountNode = node.getNode("amount");
+        return amountNode.isEmpty() ? this : setAmount(amountNode.getInt());
     }
 
     @Override
@@ -168,7 +162,9 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setName(@NotNull String name) {
-        return setName(LEGACY_COMPONENT_SERIALIZER.deserialize(name));
+        name = Colorizer.colorize(name);
+        itemMeta.setDisplayName(name);
+        return this;
     }
 
     @Override
@@ -178,14 +174,13 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setName(@NotNull ConfigurationNode node) {
-        String name = node.getNode("name").getString();
-        return setName(name);
+        return setName(node, new HashMap<>());
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setName(@NotNull ConfigurationNode node, @NotNull Map<String, String> placeholders) {
-        String name = node.getNode("name").getString();
-        return setName(name, placeholders);
+        ConfigurationNode nameNode = node.getNode("name");
+        return nameNode.isEmpty() ? this : setName(nameNode.getString(), placeholders);
     }
 
     @Override
@@ -201,13 +196,14 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setLoreString(@NotNull List<String> lore) {
-        return setLore(lore.stream()
-                .map(LEGACY_COMPONENT_SERIALIZER::deserialize)
-                .collect(Collectors.toList()));
+        lore.replaceAll(Colorizer::colorize);
+        itemMeta.setLore(lore);
+        return this;
     }
 
     @Override
-    public @NotNull ItemComponent<ItemStack> setLore(@NotNull List<String> lore, @NotNull Map<String, String> placeholders) {
+    public @NotNull ItemComponent<ItemStack> setLore(@NotNull List<String> lore,
+                                                     @NotNull Map<String, String> placeholders) {
         return setLoreString(lore.stream()
                 .map(s -> REPLACE_FUNCTION.apply(s, placeholders))
                 .collect(Collectors.toList()));
@@ -215,19 +211,15 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setLore(@NotNull ConfigurationNode node) {
-        try {
-            List<String> lore = node.getNode("lore").getList(TypeToken.of(String.class));
-            return setLoreString(lore);
-        } catch (ObjectMappingException e) {
-            throw new RuntimeException(e);
-        }
+        return setLore(node, new HashMap<>());
     }
 
     @Override
-    public @NotNull ItemComponent<ItemStack> setLore(@NotNull ConfigurationNode node, @NotNull Map<String, String> placeholders) {
+    public @NotNull ItemComponent<ItemStack> setLore(@NotNull ConfigurationNode node,
+                                                     @NotNull Map<String, String> placeholders) {
+        ConfigurationNode loreNode = node.getNode("lore");
         try {
-            List<String> lore = node.getNode("lore").getList(TypeToken.of(String.class));
-            return setLore(lore, placeholders);
+            return loreNode.isEmpty() ? this : setLore(loreNode.getList(TypeToken.of(String.class)), placeholders);
         } catch (ObjectMappingException e) {
             throw new RuntimeException(e);
         }
@@ -243,7 +235,7 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> addLore(@NotNull String lore) {
-        return addLore(LEGACY_COMPONENT_SERIALIZER.deserialize(lore));
+        return addLore(Colorizer.colorize(lore));
     }
 
     @Override
@@ -260,7 +252,7 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> removeLore(@NotNull String lore) {
-        return removeLore(LEGACY_COMPONENT_SERIALIZER.deserialize(lore));
+        return removeLore(Colorizer.colorize(lore));
     }
 
     @Override
@@ -275,7 +267,7 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public boolean containsLore(@NotNull String lore) {
-        return containsLore(LEGACY_COMPONENT_SERIALIZER.deserialize(lore));
+        return containsLore(Colorizer.colorize(lore));
     }
 
     @Override
@@ -292,8 +284,11 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setEnchantments(@NotNull ConfigurationNode node) {
+        ConfigurationNode enchantmentsNode = node.getNode("enchantments");
+        if (enchantmentsNode.isEmpty()) return this;
+
         try {
-            Map<String, Integer> enchantments = node.getNode("enchantments").getList(TypeToken.of(String.class)).stream()
+            Map<String, Integer> enchantments = enchantmentsNode.getList(TypeToken.of(String.class)).stream()
                     .map(enchantment -> enchantment.split(": "))
                     .collect(Collectors.toMap(enchantment -> enchantment[0], enchantment -> Integer.parseInt(enchantment[1])));
             return setEnchantments(enchantments);
@@ -304,49 +299,55 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> addEnchantment(@NotNull String enchantment, int level) {
-        itemMeta.addEnchant(XEnchantment.matchXEnchantment(enchantment).get().getEnchant(), level, true);
+        this.itemMeta.addEnchant(XEnchantment.matchXEnchantment(enchantment).get().getEnchant(), level, true);
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> removeEnchantment(@NotNull String enchantment) {
-        itemMeta.removeEnchant(XEnchantment.matchXEnchantment(enchantment).get().getEnchant());
+        this.itemMeta.removeEnchant(XEnchantment.matchXEnchantment(enchantment).get().getEnchant());
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> clearEnchantments() {
-        itemMeta.getEnchants().clear();
+        this.itemMeta.getEnchants().clear();
         return this;
     }
 
     @Override
     public int getEnchantmentLevel(@NotNull String enchantment) {
-        return itemMeta.getEnchantLevel(XEnchantment.matchXEnchantment(enchantment).get().getEnchant());
+        return this.itemMeta.getEnchantLevel(XEnchantment.matchXEnchantment(enchantment).get().getEnchant());
     }
 
     @Override
     public boolean containsEnchantment(@NotNull String enchantment) {
-        return itemMeta.hasEnchant(XEnchantment.matchXEnchantment(enchantment).get().getEnchant());
+        return this.itemMeta.hasEnchant(XEnchantment.matchXEnchantment(enchantment).get().getEnchant());
     }
 
     @Override
-    public void glow(boolean glow) {
+    public @NotNull ItemComponent<ItemStack> glow(boolean glow) {
         if (!hasEnchantments()) {
             addEnchantment("DURABILITY", 1);
         }
-        addFlag(ItemFlag.HIDE_ENCHANTS.name());
+        return addFlag(ItemFlag.HIDE_ENCHANTS.name());
+    }
+
+    @Override
+    public @NotNull ItemComponent<ItemStack> glow(@NotNull ConfigurationNode node) {
+        ConfigurationNode glowNode = node.getNode("glow");
+        return glowNode.isEmpty() ? this : glow(glowNode.getBoolean());
     }
 
     @Override
     public boolean isGlowing() {
-        return itemMeta.hasItemFlag(ItemFlag.HIDE_ENCHANTS);
+        return this.itemMeta.hasItemFlag(ItemFlag.HIDE_ENCHANTS);
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setSkullOwner(@NotNull String owner) {
-        if (itemStack.getType() == Material.PLAYER_HEAD) {
-            SkullMeta skullMeta = (SkullMeta) itemMeta;
+        if (this.itemStack.getType() == Material.PLAYER_HEAD) {
+            SkullMeta skullMeta = (SkullMeta) this.itemMeta;
             skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(owner));
         }
         return this;
@@ -354,22 +355,22 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setSkullOwner(@NotNull ConfigurationNode node) {
-        String owner = node.getNode("owner").getString();
-        return setSkullOwner(owner);
+        ConfigurationNode skullOwnerNode = node.getNode("skull-owner");
+        return skullOwnerNode.isEmpty() ? this : setSkullOwner(skullOwnerNode.getString());
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setHeadTexture(@NotNull String texture) {
-        if (itemStack.getType() != Material.PLAYER_HEAD) {
+        if (this.itemStack.getType() != Material.PLAYER_HEAD) {
             return this;
         }
 
         GameProfile profile = new GameProfile(UUID.randomUUID(), null);
         profile.getProperties().put("textures", new Property("textures", texture));
         try {
-            Field profileField = itemMeta.getClass().getDeclaredField("profile");
+            Field profileField = this.itemMeta.getClass().getDeclaredField("profile");
             profileField.setAccessible(true);
-            profileField.set(itemMeta, profile);
+            profileField.set(this.itemMeta, profile);
             return this;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Failed to set head texture", e);
@@ -378,8 +379,8 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setHeadTexture(@NotNull ConfigurationNode node) {
-        String texture = node.getNode("head-texture").getString();
-        return setHeadTexture(texture);
+        ConfigurationNode headTextureNode = node.getNode("head-texture");
+        return headTextureNode.isEmpty() ? this : setHeadTexture(headTextureNode.getString());
     }
 
     @Override
@@ -391,14 +392,17 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> setFlags(@NotNull Set<String> flags) {
-        flags.forEach(flag -> itemMeta.addItemFlags(ItemFlag.valueOf(flag)));
+        flags.forEach(flag -> this.itemMeta.addItemFlags(ItemFlag.valueOf(flag)));
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setFlags(@NotNull ConfigurationNode node) {
+        ConfigurationNode flagsNode = node.getNode("flags");
+        if (flagsNode.isEmpty()) return this;
+
         try {
-            Set<String> flags = node.getNode("flags").getList(TypeToken.of(String.class)).stream()
+            Set<String> flags = flagsNode.getList(TypeToken.of(String.class)).stream()
                     .map(String::toUpperCase)
                     .collect(Collectors.toSet());
             return setFlags(flags);
@@ -409,88 +413,101 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
 
     @Override
     public @NotNull ItemComponent<ItemStack> addFlag(@NotNull String flag) {
-        itemMeta.addItemFlags(ItemFlag.valueOf(flag));
+        this.itemMeta.addItemFlags(ItemFlag.valueOf(flag));
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> removeFlag(@NotNull String flag) {
-        itemMeta.removeItemFlags(ItemFlag.valueOf(flag));
+        this.itemMeta.removeItemFlags(ItemFlag.valueOf(flag));
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> clearFlags() {
-        itemMeta.getItemFlags().clear();
+        this.itemMeta.getItemFlags().clear();
         return this;
     }
 
     @Override
     public boolean containsFlag(@NotNull String flag) {
-        return itemMeta.hasItemFlag(ItemFlag.valueOf(flag));
+        return this.itemMeta.hasItemFlag(ItemFlag.valueOf(flag));
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setUnbreakable(boolean unbreakable) {
-        itemMeta.setUnbreakable(unbreakable);
+        this.itemMeta.setUnbreakable(unbreakable);
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setUnbreakable(@NotNull ConfigurationNode node) {
-        boolean unbreakable = node.getNode("unbreakable").getBoolean();
-        return setUnbreakable(unbreakable);
+        ConfigurationNode unbreakableNode = node.getNode("unbreakable");
+        return unbreakableNode.isEmpty() ? this : setUnbreakable(unbreakableNode.getBoolean());
     }
 
     @Override
     public boolean isUnbreakable() {
-        return itemMeta.isUnbreakable();
+        return this.itemMeta.isUnbreakable();
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setCustomModelData(int customModelData) {
-        itemMeta.setCustomModelData(customModelData);
+        this.itemMeta.setCustomModelData(customModelData);
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setCustomModelData(@NotNull ConfigurationNode node) {
-        int customModelData = node.getNode("model").getInt();
-        return setCustomModelData(customModelData);
+        ConfigurationNode customModelDataNode = node.getNode("custom-model-data");
+        return customModelDataNode.isEmpty() ? this : setCustomModelData(customModelDataNode.getInt());
     }
 
     @Override
     public int getCustomModelData() {
-        return itemMeta.getCustomModelData();
+        return this.itemMeta.getCustomModelData();
+    }
+
+    @Override
+    public @Nullable String getNbt(@NotNull String nbt) {
+        return this.nbtItem.getString(nbt);
+    }
+
+    @Override
+    public boolean hasNbt(@NotNull String nbt) {
+        return this.nbtItem.hasTag(nbt);
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setNbt(@NotNull String nbt, @NotNull String value) {
-        nbtItem.setString(nbt, value);
+        this.nbtItem.setString(nbt, value);
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setNbt(@NotNull String nbt, int value) {
-        nbtItem.setInteger(nbt, value);
+        this.nbtItem.setInteger(nbt, value);
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setNbt(@NotNull String nbt, double value) {
-        nbtItem.setDouble(nbt, value);
+        this.nbtItem.setDouble(nbt, value);
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setNbt(@NotNull String nbt, boolean value) {
-        nbtItem.setBoolean(nbt, value);
+        this.nbtItem.setBoolean(nbt, value);
         return this;
     }
 
     @Override
     public @NotNull ItemComponent<ItemStack> setNbt(@NotNull ConfigurationNode node) {
-        node.getNode("nbt").getChildrenMap().forEach((key, value) -> {
+        ConfigurationNode nbtNode = node.getNode("nbt");
+        if (nbtNode.isEmpty()) return this;
+
+        nbtNode.getChildrenMap().forEach((key, value) -> {
             if (value.getValue() instanceof String) {
                 setNbt(key.toString(), value.getString());
             } else if (value.getValue() instanceof Integer) {
@@ -505,39 +522,15 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
     }
 
     @Override
-    public @NotNull String toBase64() {
-        merge();
-        return Base64Decoder.encode(itemStack);
-    }
-
-    @Override
     public @NotNull ItemComponent<ItemStack> merge() {
-        itemStack.setItemMeta(itemMeta);
-        nbtItem.mergeNBT(itemStack);
+        if (this.itemStack == null) {
+            return this;
+        }
+
+        this.itemStack.setItemMeta(this.itemMeta);
+        if (this.nbtItem != null) {
+            this.nbtItem.mergeNBT(this.itemStack);
+        }
         return this;
-    }
-
-    public static final class Adapter implements TypeSerializer<ItemComponent<ItemStack>> {
-        @Override
-        public @Nullable ItemComponent<ItemStack> deserialize(@NonNull TypeToken<?> type, @NonNull ConfigurationNode value)
-                throws ObjectMappingException {
-            String base64 = value.getValue(TypeToken.of(String.class));
-            if (base64 == null) {
-                return null;
-            }
-
-            return BukkitItemComponent.fromBase64(base64);
-        }
-
-        @Override
-        public void serialize(@NonNull TypeToken<?> type, @Nullable ItemComponent<ItemStack> obj, @NonNull ConfigurationNode value) {
-            if (obj == null) {
-                value.setValue(null);
-                return;
-            }
-
-            String base64 = obj.toBase64();
-            value.setValue(base64);
-        }
     }
 }

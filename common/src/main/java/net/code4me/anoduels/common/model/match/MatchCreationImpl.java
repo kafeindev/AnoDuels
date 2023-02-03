@@ -21,7 +21,10 @@ public final class MatchCreationImpl implements MatchCreation {
     @NotNull
     private final MatchProperties properties;
 
-    private boolean accepted = false;
+    private boolean sent;
+    private long sentTime;
+
+    private boolean accepted;
 
     private MatchCreationImpl(@NotNull PlayerComponent creator, @NotNull PlayerComponent opponent,
                               @NotNull MatchProperties properties) {
@@ -46,12 +49,28 @@ public final class MatchCreationImpl implements MatchCreation {
     }
 
     @Override
-    public boolean isAccepted() {
-        return this.accepted;
+    public long getSentTime() {
+        return this.sentTime;
+    }
+
+    @Override
+    public void send() {
+        this.sent = true;
+        this.sentTime = System.currentTimeMillis();
+    }
+
+    @Override
+    public boolean isSent() {
+        return this.sent;
     }
 
     @Override
     public void accept() {
         this.accepted = true;
+    }
+
+    @Override
+    public boolean isAccepted() {
+        return this.accepted;
     }
 }

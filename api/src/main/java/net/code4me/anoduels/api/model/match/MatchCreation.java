@@ -5,16 +5,19 @@ import net.code4me.anoduels.api.model.match.properties.MatchProperties;
 import org.jetbrains.annotations.NotNull;
 
 public interface MatchCreation {
-    @NotNull
-    PlayerComponent getCreator();
+    @NotNull PlayerComponent getCreator();
 
-    @NotNull
-    PlayerComponent getOpponent();
+    @NotNull PlayerComponent getOpponent();
 
-    @NotNull
-    MatchProperties getProperties();
+    @NotNull MatchProperties getProperties();
 
-    boolean isAccepted();
+    long getSentTime();
+
+    void send();
+
+    boolean isSent();
 
     void accept();
+
+    boolean isAccepted();
 }

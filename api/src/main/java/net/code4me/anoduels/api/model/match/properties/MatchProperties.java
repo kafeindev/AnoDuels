@@ -1,23 +1,27 @@
 package net.code4me.anoduels.api.model.match.properties;
 
+import net.code4me.anoduels.api.model.match.bet.Bet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface MatchProperties {
-    @NotNull
-    String getArena();
+    @Nullable String getArenaCategory();
+
+    void setArenaCategory(@NotNull String category);
+
+    @Nullable String getArena();
 
     void setArena(@NotNull String arena);
 
-    @NotNull
-    String getKit();
+    @Nullable String getKit();
 
-    void setKit(@NotNull String kit);
+    void setKit(@Nullable String kit);
 
     boolean isRiskyMatch();
 
     void setRiskyMatch(boolean risky);
 
-    boolean isEditable();
+    @Nullable Bet.Type getBetType();
 
-    void setEditable(boolean editable);
+    void setBetType(@NotNull Bet.Type betType);
 }

@@ -1,7 +1,44 @@
 settings:
 
   invite-duration: 1m
-  queue-duration: 1m
 
   match:
-    expiration: 5m
+    duration: 5m
+
+    # This countdown messages is sent to players to prepare their bets.
+    waiting-countdown: "&6Get ready to bet! &a&l(%countdown%s)"
+    waiting-queue-countdown: "&6You are waiting for the arena to be ready!"
+    teleporting-countdown: "&6You will be teleported in &a&l(%countdown%s)"
+
+    starting-countdown:
+      sound: NOTE_PIANO
+      messages:
+        - "&6The match will start in &a&l(1s)"
+        - "&6The match will start in &a&l(2s)"
+        - "&6The match will start in &a&l(3s)"
+        - "&6The match will start in &a&l(4s)"
+        - "&6The match will start in &a&l(5s)"
+      titles:
+        - "&c&l1"
+        - "&c&l2"
+        - "&e&l3"
+        - "&a&l4"
+        - "&a&l5"
+
+    started:
+      sound: NOTE_PIANO
+      title: "&a&lThe match has started!"
+      messages:
+        - ""
+        - "&6&lThe match has started!"
+        - ""
+        - "&eOpponent: &a%opponent%"
+        - "&eArena: &a%arena%"
+        - "&eBet: &a%bet_type%"
+
+  command-blocker:
+    enabled: true
+    # Available types: WHITELIST, BLACKLIST
+    type: "WHITELIST"
+    commands:
+      - "msg"

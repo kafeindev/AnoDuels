@@ -26,9 +26,9 @@ public final class WorldEditCompatibility {
 
             return new PairFactory<>(
                     LocationComponent.of(world.getName(),
-                            region.getMinimumPoint().getBlockX(), region.getMinimumPoint().getBlockY(), region.getMinimumPoint().getBlockZ()),
+                            region.getMinimumPoint().getBlockX(), region.getMinimumPoint().getBlockY(), region.getMinimumPoint().getBlockZ(), 0, 0),
                     LocationComponent.of(world.getName(),
-                            region.getMaximumPoint().getBlockX(), region.getMaximumPoint().getBlockY(), region.getMaximumPoint().getBlockZ()));
+                            region.getMaximumPoint().getBlockX(), region.getMaximumPoint().getBlockY(), region.getMaximumPoint().getBlockZ(), 0, 0));
         } catch (IncompleteRegionException e) {
             return null;
         }

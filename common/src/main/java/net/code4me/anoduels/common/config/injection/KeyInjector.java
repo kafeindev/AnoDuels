@@ -41,21 +41,19 @@ public final class KeyInjector {
         inject(config, clazz, false);
     }
 
-    public void inject(@NotNull Config config, @NotNull Class<?> clazz, boolean prefix)
+    public <V> void inject(@NotNull Config config, @NotNull Class<?> clazz, boolean prefix)
             throws IllegalAccessException, IllegalArgumentException, ObjectMappingException {
         for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-
-            ConfigKey<Object> configKey = (ConfigKey<Object>) field.get(null);
-            Class<?> type = field.getType();
+            ConfigKey<V> configKey = (ConfigKey<V>) field.get(null);
 
             ConfigurationNode node = config.getNode();
             if (prefix) node = node.getNode(config.getName().toLowerCase(Locale.ROOT));
             for (String path : configKey.getKeys()) node = node.getNode(path);
 
-            Object value = (Collection.class.isAssignableFrom(type)
-                    ? node.getList(TypeToken.of(type))
-                    : node.getValue(TypeToken.of(type)));
+            Class<?> valueClass = configKey.getValue().getClass();
+            V value = (V) (Collection.class.isAssignableFrom(valueClass)
+                    ? node.getValue()
+                    : node.getValue(TypeToken.of(valueClass)));
             if (value != null) configKey.setValue(value);
         }
     }

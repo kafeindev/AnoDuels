@@ -6,44 +6,46 @@ import ninja.leaping.configurate.ConfigurationNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 public interface Menu {
-    void initialize();
+    void initialize(@NotNull UnaryOperator<String> colorizeFunction);
 
-    void createButtons(@NotNull ConfigurationNode node);
+    @NotNull Map<Integer, ItemComponent<?>> createItems(@NotNull PlayerComponent playerComponent);
 
     void open(@NotNull PlayerComponent playerComponent);
 
     void close(@NotNull PlayerComponent playerComponent);
 
-    void click(@NotNull PlayerComponent playerComponent, @NotNull ItemComponent<?> item, int slot);
+    boolean click(@NotNull PlayerComponent playerComponent, int slot,
+                  @NotNull ItemComponent<?> item);
 
-    @NotNull
-    ConfigurationNode getNode();
+    default boolean click(@NotNull PlayerComponent playerComponent, int slot,
+                          @NotNull ItemComponent<?> item, @NotNull ItemComponent<?> cursor) {
+        return click(playerComponent, slot, item);
+    }
 
-    @NotNull
-    String getName();
+    boolean clickPlayerInventory(@NotNull PlayerComponent playerComponent, int slot,
+                                 @NotNull ItemComponent<?> item, @NotNull ItemComponent<?> cursor);
 
-    @NotNull
-    String getTitle();
+    @NotNull ConfigurationNode getNode();
+
+    @NotNull String getName();
+
+    @NotNull String getTitle();
 
     int getSize();
 
-    @Nullable
-    ItemComponent<?> getFillerItem();
+    boolean playersCanMoveItems();
+
+    @Nullable ItemComponent<?> getFillerItem();
 
     @NotNull
-    Set<MenuButton> getButtons();
+    Set<PlayerComponent> getViewers();
 
-    void putButton(@NotNull MenuButton button);
+    boolean isViewing(@NotNull PlayerComponent playerComponent);
 
-    void removeButton(@NotNull MenuButton button);
-
-    @NotNull
-    Optional<MenuButton> findButtonByName(@NotNull String name);
-
-    @NotNull
-    Optional<MenuButton> findButtonBySlot(int slot);
+    void setViewersInventoryItem(@NotNull PlayerComponent playerComponent, int slot, @Nullable ItemComponent<?> itemComponent);
 }

@@ -25,6 +25,7 @@
 package net.code4me.anoduels.bukkit.component;
 
 import net.code4me.anoduels.api.component.LocationComponent;
+import net.code4me.anoduels.api.serializer.Serializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -33,21 +34,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class BukkitLocationComponentSerializer {
-    private BukkitLocationComponentSerializer() {}
+public final class BukkitLocationComponentSerializer implements Serializer<LocationComponent, Location> {
+    public static final BukkitLocationComponentSerializer INSTANCE = new BukkitLocationComponentSerializer();
 
-    @NotNull
-    public static Location serialize(@NotNull LocationComponent locationComponent) {
+    private BukkitLocationComponentSerializer() {
+    }
+
+    @Override
+    public @NotNull Location serialize(@NotNull LocationComponent locationComponent) {
         @Nullable World world = Bukkit.getWorld(locationComponent.getWorldName());
         Objects.requireNonNull(world, "Couldn't find a world with the name: " + locationComponent.getWorldName());
 
-        return new Location(world, locationComponent.getX(), locationComponent.getY(), locationComponent.getZ());
+        return new Location(world,
+                locationComponent.getX(), locationComponent.getY(), locationComponent.getZ(),
+                locationComponent.getYaw(), locationComponent.getPitch());
     }
 
-    @NotNull
-    public static LocationComponent deserialize(@NotNull Location location) {
+    @Override
+    public @NotNull LocationComponent deserialize(@NotNull Location location) {
         Objects.requireNonNull(location.getWorld(), "Location world cannot be null");
 
-        return LocationComponent.of(location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        return LocationComponent.of(location.getWorld().getName(),
+                location.getBlockX(), location.getBlockY(), location.getBlockZ(),
+                location.getYaw(), location.getPitch());
     }
 }

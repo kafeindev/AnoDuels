@@ -26,6 +26,7 @@ package net.code4me.anoduels.common.config;
 
 import net.code4me.anoduels.api.managers.ConfigManager;
 import net.code4me.anoduels.api.model.Config;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import net.code4me.anoduels.common.manager.AbstractManager;
 import net.code4me.anoduels.common.config.injection.KeyInjector;
 import net.code4me.anoduels.common.config.injection.ResourceInjector;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ConfigManagerImpl extends AbstractManager<String, Config> implements ConfigManager {
@@ -64,24 +66,38 @@ public final class ConfigManagerImpl extends AbstractManager<String, Config> imp
     }
 
     @Override
-    public @NotNull Config create(@NotNull String name, @NotNull String path, @NotNull InputStream inputStream) {
+    public @NotNull Config create(@NotNull String name, @NotNull String path, @NotNull String resource) {
+        return create(name, path, getClass(), resource);
+    }
+
+    @Override
+    public @NotNull Config create(@NotNull String name, @NotNull String path,
+                                  @NotNull InputStream inputStream) {
         Path filePath = dataPath.resolve(path);
-        resourceInjector.inject(filePath, inputStream);
+        if (Files.notExists(filePath)) {
+            resourceInjector.inject(filePath, inputStream);
+        }
 
         return create(name, filePath.toFile());
     }
 
     @Override
-    public @NotNull Config create(@NotNull String name, @NotNull String path, @NotNull Class<?> loader, @NotNull String resource) {
+    public @NotNull Config create(@NotNull String name, @NotNull String path,
+                                  @NotNull Class<?> loader, @NotNull String resource) {
         Path filePath = dataPath.resolve(path);
-        resourceInjector.inject(filePath, loader, resource);
+        if (Files.notExists(filePath)) {
+            resourceInjector.inject(filePath, loader, resource);
+        }
 
         return create(name, filePath.toFile());
     }
 
     @Override
-    public @NotNull Config create(@NotNull String name, @NotNull File file, @NotNull Class<?> loader, @NotNull String resource) {
-        resourceInjector.inject(file, loader, resource);
+    public @NotNull Config create(@NotNull String name, @NotNull File file,
+                                  @NotNull Class<?> loader, @NotNull String resource) {
+        if (Files.notExists(file.toPath())) {
+            resourceInjector.inject(file.toPath(), loader, resource);
+        }
 
         return create(name, file);
     }

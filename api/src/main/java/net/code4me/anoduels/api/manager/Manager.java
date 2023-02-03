@@ -27,20 +27,24 @@ package net.code4me.anoduels.api.manager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public interface Manager<K, V> {
-    @NotNull
-    Collection<V> findAll();
+    @NotNull Map<K, V> getMap();
 
-    @NotNull
-    Optional<V> find(@NotNull K key);
+    @NotNull Collection<V> findAll();
+
+    @NotNull Optional<V> find(@NotNull K key);
 
     V get(@NotNull K key);
 
     V put(@NotNull K key, @NotNull V value);
 
     void remove(@NotNull K key);
+
+    boolean removeIf(@NotNull Predicate<? super V> filter);
 
     void clear();
 

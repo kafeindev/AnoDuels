@@ -32,20 +32,20 @@ import java.io.File;
 import java.io.InputStream;
 
 public interface ConfigManager extends Manager<String, Config> {
-    @NotNull
-    Config create(@NotNull String name, @NotNull String path);
+    @NotNull Config create(@NotNull String name, @NotNull String path);
 
-    @NotNull
-    Config create(@NotNull String name, @NotNull File file);
+    @NotNull Config create(@NotNull String name, @NotNull File file);
 
-    @NotNull
-    Config create(@NotNull String name, @NotNull String path, @NotNull InputStream inputStream);
+    @NotNull Config create(@NotNull String name, @NotNull String path, @NotNull String resource);
 
-    @NotNull
-    Config create(@NotNull String name, @NotNull String path, @NotNull Class<?> loader, @NotNull String resource);
+    @NotNull Config create(@NotNull String name, @NotNull String path,
+                           @NotNull InputStream inputStream);
 
-    @NotNull
-    Config create(@NotNull String name, @NotNull File file, @NotNull Class<?> loader, @NotNull String resource);
+    @NotNull Config create(@NotNull String name, @NotNull String path,
+                           @NotNull Class<?> loader, @NotNull String resource);
+
+    @NotNull Config create(@NotNull String name, @NotNull File file,
+                           @NotNull Class<?> loader, @NotNull String resource);
 
     void injectKeys(@NotNull Config config, @NotNull Class<?> clazz);
 

@@ -29,6 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Duration;
 
 public interface TaskScheduler {
+    default void execute(@NotNull Runnable task) {
+        execute(task, false);
+    }
+
+    void execute(@NotNull Runnable task, boolean async);
+
     @NotNull
     default ScheduledTask schedule(@NotNull Runnable task, @NotNull Duration delay) {
         return schedule(task, delay, false);
@@ -44,8 +50,7 @@ public interface TaskScheduler {
         return schedule(task, delay, false);
     }
 
-    @NotNull
-    ScheduledTask schedule(@NotNull Runnable task, long delay, boolean async);
+    @NotNull ScheduledTask schedule(@NotNull Runnable task, long delay, boolean async);
 
     @NotNull
     default ScheduledTask scheduleRepeating(@NotNull Runnable task, @NotNull Duration period) {
@@ -84,6 +89,9 @@ public interface TaskScheduler {
         return scheduleRepeating(task, delay, period, false);
     }
 
-    @NotNull
-    ScheduledTask scheduleRepeating(@NotNull Runnable task, long delay, long period, boolean async);
+    @NotNull ScheduledTask scheduleRepeating(@NotNull Runnable task, long delay, long period, boolean async);
+
+    void shutdownExecutor();
+
+    void shutdownWorkerPool();
 }

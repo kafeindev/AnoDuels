@@ -1,0 +1,19 @@
+menu:
+  title: "&6&lKit Selection"
+  size: 9
+
+  #fill: "GRAY_STAINED_GLASS_PANE"
+  #open-sound: ""
+  #close-sound: ""
+
+  items:
+    your_items:
+      material: "PAPER"
+      name: "&6&lYour Items"
+      lore:
+        - "&7Click to select your items!"
+    kit_display:
+      material: "%kit_icon%"
+      name: "&6&l%kit_name% Kit"
+      lore:
+        - "&7Click to select this kit!"

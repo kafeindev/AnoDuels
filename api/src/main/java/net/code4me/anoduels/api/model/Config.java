@@ -28,9 +28,7 @@ import ninja.leaping.configurate.ConfigurationNode;
 import org.jetbrains.annotations.NotNull;
 
 public interface Config {
-    @NotNull
-    String getName();
+    @NotNull String getName();
 
-    @NotNull
-    ConfigurationNode getNode();
+    @NotNull ConfigurationNode getNode();
 }

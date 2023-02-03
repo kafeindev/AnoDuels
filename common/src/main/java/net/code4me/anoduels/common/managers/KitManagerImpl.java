@@ -1,13 +1,12 @@
 package net.code4me.anoduels.common.managers;
 
-import com.google.common.reflect.TypeToken;
 import net.code4me.anoduels.api.managers.KitManager;
 import net.code4me.anoduels.api.model.Kit;
 import net.code4me.anoduels.common.config.misc.FileProcessor;
 import net.code4me.anoduels.common.config.misc.NodeProcessor;
 import net.code4me.anoduels.common.manager.AbstractManager;
 import net.code4me.anoduels.common.model.KitImpl;
-import net.code4me.anoduels.common.plugin.DuelPlugin;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
@@ -34,11 +33,6 @@ public final class KitManagerImpl extends AbstractManager<String, Kit> implement
     }
 
     @Override
-    public void shutdown() {
-        saveAll(new ConcurrentHashMap<>(map));
-    }
-
-    @Override
     public @NotNull Kit create(@NotNull String name) {
         return KitImpl.create(name);
     }
@@ -57,7 +51,7 @@ public final class KitManagerImpl extends AbstractManager<String, Kit> implement
 
     @Override
     public @NotNull Kit fromNode(@NotNull ConfigurationNode node) {
-        return KitImpl.fromNode(node);
+        return KitImpl.fromNode(plugin, node);
     }
 
     @Override
@@ -95,13 +89,9 @@ public final class KitManagerImpl extends AbstractManager<String, Kit> implement
     @Override
     public @NotNull CompletableFuture<Kit> load(@NotNull Path path) {
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                ConfigurationNode node = NodeProcessor.processNode(path, true);
+            ConfigurationNode node = NodeProcessor.processNode(path, true);
 
-                return node.getValue(TypeToken.of(Kit.class));
-            } catch (ObjectMappingException e) {
-                throw new RuntimeException(e);
-            }
+            return fromNode(node);
         });
     }
 
@@ -126,7 +116,7 @@ public final class KitManagerImpl extends AbstractManager<String, Kit> implement
             ConfigurationLoader<ConfigurationNode> loader = NodeProcessor.createGsonLoader(path.toFile());
             ConfigurationNode node = loader.createEmptyNode();
             try {
-                node.setValue(TypeToken.of(Kit.class), kit);
+                kit.save(plugin, node);
 
                 loader.save(node);
             } catch (ObjectMappingException | IOException e) {

@@ -1,14 +1,21 @@
 package net.code4me.anoduels.api.model.match.player;
 
+import net.code4me.anoduels.api.component.ItemComponent;
+import net.code4me.anoduels.api.component.LocationComponent;
 import net.code4me.anoduels.api.component.PlayerComponent;
 import net.code4me.anoduels.api.model.match.bet.Bet;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public interface MatchPlayer<I> {
-    @NotNull
-    PlayerComponent getHandle();
+public interface MatchPlayer {
+    void save(@NotNull DuelPlugin plugin, @NotNull ConfigurationNode node) throws ObjectMappingException;
+
+    @NotNull PlayerComponent getHandle();
 
     @NotNull
     default UUID getUniqueId() {
@@ -22,16 +29,27 @@ public interface MatchPlayer<I> {
 
     boolean isOwner();
 
-    @NotNull
-    Bet<I> getBet();
+    @Nullable
+    MatchPlayerResult getResult();
 
-    void setBet(@NotNull Bet<I> bet);
+    void setResult(@Nullable MatchPlayerResult result);
 
-    @NotNull
-    I[] getOldItems();
+    @Nullable
+    LocationComponent getOldLocation();
 
-    @NotNull
-    I[] getOldArmors();
+    void setOldLocation(@Nullable LocationComponent location);
 
-    void setOldContents(@NotNull I[] items, @NotNull I[] armors);
+    @Nullable Bet getBet();
+
+    void setBet(@NotNull Bet bet);
+
+    void setBetAccepted(boolean accepted);
+
+    boolean isBetAccepted();
+
+    @NotNull ItemComponent<?>[] getOldItems();
+
+    @NotNull ItemComponent<?>[] getOldArmors();
+
+    void setOldContents(@NotNull ItemComponent<?>[] items, @NotNull ItemComponent<?>[] armors);
 }

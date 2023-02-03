@@ -25,7 +25,7 @@
 package net.code4me.anoduels.bukkit.listener.registry;
 
 import com.google.common.base.Preconditions;
-import net.code4me.anoduels.common.plugin.DuelPlugin;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;

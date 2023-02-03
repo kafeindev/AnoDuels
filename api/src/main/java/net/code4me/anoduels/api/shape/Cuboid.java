@@ -31,13 +31,15 @@ public final class Cuboid {
     public static final Serializer SERIALIZER = new Serializer();
 
     @NotNull
-    public static Cuboid of(int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
-        return new Cuboid(minX, maxX, minY, maxY, minZ, maxZ);
+    public static Cuboid fromLocationComponents(@NotNull LocationComponent min, @NotNull LocationComponent max) {
+        return of((int) min.getX(), (int) max.getX(),
+                (int) min.getY(), (int) max.getY(),
+                (int) min.getZ(), (int) max.getZ());
     }
 
     @NotNull
-    public static Cuboid fromLocationComponents(@NotNull LocationComponent min, @NotNull LocationComponent max) {
-        return new Cuboid(min.getX(), max.getX(), min.getY(), max.getY(), min.getZ(), max.getZ());
+    public static Cuboid of(int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
+        return new Cuboid(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
     private final int minX;
@@ -56,12 +58,12 @@ public final class Cuboid {
         this.maxZ = maxZ;
     }
 
-    public boolean isInCuboid(int x, int z) {
-        return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+    public boolean isInCuboid(int x, int y, int z) {
+        return x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
     }
 
-    public boolean isInCuboid(LocationComponent locationComponent) {
-        return isInCuboid(locationComponent.getX(), locationComponent.getZ());
+    public boolean isInCuboid(@NotNull LocationComponent locationComponent) {
+        return isInCuboid((int) locationComponent.getX(), (int) locationComponent.getY(), (int) locationComponent.getZ());
     }
 
     public int getMinX() {
@@ -104,9 +106,7 @@ public final class Cuboid {
 
             return new Cuboid(Integer.parseInt(split[0]), Integer.parseInt(split[1]),
                     Integer.parseInt(split[2]), Integer.parseInt(split[3]),
-                    Integer.parseInt(split[4]), Integer.parseInt(split[3])
-            );
+                    Integer.parseInt(split[4]), Integer.parseInt(split[5]));
         }
-
     }
 }

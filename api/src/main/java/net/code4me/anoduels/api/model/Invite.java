@@ -1,21 +1,25 @@
 package net.code4me.anoduels.api.model;
 
+import net.code4me.anoduels.api.component.PlayerComponent;
 import net.code4me.anoduels.api.model.match.properties.MatchProperties;
 import org.jetbrains.annotations.NotNull;
 
 public interface Invite {
-    @NotNull
-    String getSender();
+    @NotNull PlayerComponent getSender();
 
-    @NotNull
-    String getReceiver();
+    @NotNull PlayerComponent getReceiver();
+
+    @NotNull MatchProperties getProperties();
+
+    void sent();
+
+    boolean isSent();
 
     void accept();
 
-    boolean isAccepted();
+    void deny();
 
-    @NotNull
-    MatchProperties getMatchProperties();
+    boolean isAccepted();
 
     long getExpiration();
 

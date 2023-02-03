@@ -12,24 +12,17 @@ import java.util.concurrent.CompletableFuture;
 public interface KitManager extends Manager<String, Kit> {
     void initialize();
 
-    void shutdown();
-
-    @NotNull
-    Kit create(@NotNull String name);
+    @NotNull Kit create(@NotNull String name);
 
     void delete(@NotNull String name);
 
-    @NotNull
-    Kit fromNode(@NotNull ConfigurationNode node);
+    @NotNull Kit fromNode(@NotNull ConfigurationNode node);
 
-    @NotNull
-    CompletableFuture<Map<String, Kit>> loadAll();
+    @NotNull CompletableFuture<Map<String, Kit>> loadAll();
 
-    @NotNull
-    CompletableFuture<Kit> load(@NotNull String name);
+    @NotNull CompletableFuture<Kit> load(@NotNull String name);
 
-    @NotNull
-    CompletableFuture<Kit> load(@NotNull Path path);
+    @NotNull CompletableFuture<Kit> load(@NotNull Path path);
 
     void saveAll(@NotNull Map<String, Kit> kits);
 

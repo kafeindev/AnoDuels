@@ -6,11 +6,8 @@ import net.code4me.anoduels.api.managers.MenuManager;
 import net.code4me.anoduels.api.model.menu.Menu;
 import net.code4me.anoduels.common.config.misc.FileProcessor;
 import net.code4me.anoduels.common.manager.AbstractManager;
-import net.code4me.anoduels.common.menus.BetTypeSelectionMenu;
-import net.code4me.anoduels.common.menus.MatchCreationMenu;
-import net.code4me.anoduels.common.model.menu.AbstractMenu;
-import net.code4me.anoduels.common.plugin.DuelPlugin;
-import net.kyori.adventure.text.TextComponent;
+import net.code4me.anoduels.common.menus.*;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -19,8 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class MenuManagerImpl extends AbstractManager<String, Menu> implements MenuManager {
-    private final Map<PlayerComponent, String> viewers = new HashMap<>();
-
     @NotNull
     private final DuelPlugin plugin;
 
@@ -44,7 +39,15 @@ public final class MenuManagerImpl extends AbstractManager<String, Menu> impleme
     }
 
     @Override
-    public @NotNull Optional<Menu> findByTitle(@NotNull TextComponent title) {
+    public void reload() {
+        getViewers().keySet().forEach(PlayerComponent::closeMenu);
+
+        clear();
+        initialize();
+    }
+
+    @Override
+    public @NotNull Optional<Menu> findByTitle(@NotNull String title) {
         return findAll().stream()
                 .filter(menu -> menu.getTitle().equals(title))
                 .findFirst();
@@ -52,47 +55,44 @@ public final class MenuManagerImpl extends AbstractManager<String, Menu> impleme
 
     @Override
     public @NotNull Optional<Menu> findByViewer(@NotNull PlayerComponent playerComponent) {
-        return Optional.ofNullable(this.viewers.get(playerComponent))
-                .flatMap(this::find);
+        return findAll().stream()
+                .filter(menu -> menu.isViewing(playerComponent))
+                .findFirst();
     }
 
     @Override
     public @NotNull Map<PlayerComponent, String> getViewers() {
-        return this.viewers;
+        return findAll().stream()
+                .collect(HashMap::new, (map, menu) -> {
+                    menu.getViewers().forEach(playerComponent -> map.put(playerComponent, menu.getName()));
+                }, HashMap::putAll);
     }
 
-    @Override
-    public void putViewer(@NotNull PlayerComponent playerComponent, @NotNull String menuName) {
-        this.viewers.put(playerComponent, menuName);
-    }
-
-    @Override
-    public void removeViewer(@NotNull PlayerComponent playerComponent) {
-        this.viewers.remove(playerComponent);
-    }
-
-    public enum MenuType {
+    public enum MenuType implements MenuManager.MenuTypeImplementation {
         MATCH_CREATION("match_creation", MatchCreationMenu.class),
-        BET_TYPE_SELECTION("bet_type_selection", BetTypeSelectionMenu.class);
+        BET_TYPE_SELECTION("bet_type_selection", BetTypeSelectionMenu.class),
+        KIT_SELECTION("kit_selection", KitSelectionMenu.class),
+        ARENA_SELECTION("arena_selection", ArenaSelectionMenu.class),
+        BET_ACCEPTANCE("bet_acceptance", BetAcceptanceMenu.class);
 
         @NotNull
         private final String name;
 
         @NotNull
-        private final Class<? extends AbstractMenu> clazz;
+        private final Class<? extends Menu> clazz;
 
-        MenuType(@NotNull String name, @NotNull Class<? extends AbstractMenu> clazz) {
+        MenuType(@NotNull String name, @NotNull Class<? extends Menu> clazz) {
             this.name = name;
             this.clazz = clazz;
         }
 
-        @NotNull
-        public String getName() {
+        @Override
+        public @NotNull String getName() {
             return this.name;
         }
 
-        @NotNull
-        public Class<? extends AbstractMenu> getClazz() {
+        @Override
+        public @NotNull Class<? extends Menu> getClazz() {
             return this.clazz;
         }
     }

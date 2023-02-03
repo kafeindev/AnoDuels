@@ -1,0 +1,14 @@
+menu:
+  title: "&6&lArena Selection"
+  size: 9
+
+  #fill: "GRAY_STAINED_GLASS_PANE"
+  #open-sound: ""
+  #close-sound: ""
+
+  items:
+    arena_display:
+      material: "%category_icon%"
+      name: "&6&l%category_name% Arena &7(Click to Select)"
+      lore:
+        - "&a%category_description%"

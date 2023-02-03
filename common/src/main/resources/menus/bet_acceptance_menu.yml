@@ -1,0 +1,16 @@
+menu:
+  title: "&6&lBet Acceptance"
+  size: 27
+
+  # can't be changed
+  fill: "GRAY_STAINED_GLASS_PANE"
+  #open-sound: ""
+  #close-sound: ""
+
+  items:
+    accept:
+      material: "GREEN_STAINED_GLASS_PANE"
+      name: "&a&lAccept Bet"
+    cancel:
+      material: "RED_STAINED_GLASS_PANE"
+      name: "&c&lCancel Bet"

@@ -3,18 +3,19 @@ package net.code4me.anoduels.common.model.menu;
 import net.code4me.anoduels.api.component.ItemComponent;
 import net.code4me.anoduels.api.component.PlayerComponent;
 import net.code4me.anoduels.api.model.menu.Menu;
-import net.code4me.anoduels.api.model.menu.MenuButton;
 import net.code4me.anoduels.common.managers.MenuManagerImpl;
-import net.code4me.anoduels.common.plugin.DuelPlugin;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import ninja.leaping.configurate.ConfigurationNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.UnaryOperator;
 
 public abstract class AbstractMenu implements Menu {
-    private final Set<MenuButton> buttons = new HashSet<>();
+    private final Set<PlayerComponent> viewers = new HashSet<>();
 
     @NotNull
     protected final DuelPlugin plugin;
@@ -25,10 +26,10 @@ public abstract class AbstractMenu implements Menu {
     @NotNull
     private final String name;
 
-    @NotNull
-    private final String title;
+    private final boolean playersCanMoveItems;
 
-    private final int size;
+    private String title;
+    private int size;
 
     private String openSound;
     private String closeSound;
@@ -36,29 +37,28 @@ public abstract class AbstractMenu implements Menu {
     private ItemComponent<?> fillerItem;
 
     protected AbstractMenu(@NotNull DuelPlugin plugin, @NotNull ConfigurationNode node) {
-        this(plugin, node, Objects.requireNonNull(node.getNode("title").getString()), node.getNode("size").getInt());
+        this(plugin, node, false);
     }
 
-    private AbstractMenu(@NotNull DuelPlugin plugin, @NotNull ConfigurationNode node,
-                         @NotNull String title, int size) {
+    protected AbstractMenu(@NotNull DuelPlugin plugin, @NotNull ConfigurationNode node, boolean playersCanMoveItems) {
         this.plugin = plugin;
         this.node = node;
         this.name = getType().getName();
-        this.title = title;
-        this.size = size;
+        this.playersCanMoveItems = playersCanMoveItems;
     }
 
     @Override
-    public void initialize() {
+    public void initialize(@NotNull UnaryOperator<String> colorizeAction) {
+        this.title = colorizeAction.apply(node.getNode("title").getString());
+        this.size = node.getNode("size").getInt();
+
         this.openSound = node.getNode("open-sound").getString();
         this.closeSound = node.getNode("close-sound").getString();
 
         ConfigurationNode fillerItemNode = node.getNode("fill");
         if (!fillerItemNode.isEmpty()) {
-            this.fillerItem = plugin.getItemCreator().fromNode(fillerItemNode);
+            this.fillerItem = plugin.getItemFactory().create(fillerItemNode.getString(), 1);
         }
-
-        createButtons(node.getNode("items"));
     }
 
     @Override
@@ -68,6 +68,7 @@ public abstract class AbstractMenu implements Menu {
         }
 
         playerComponent.openMenu(this);
+        this.viewers.add(playerComponent);
     }
 
     @Override
@@ -75,28 +76,33 @@ public abstract class AbstractMenu implements Menu {
         if (this.closeSound != null) {
             playerComponent.playSound(this.closeSound);
         }
+        this.viewers.remove(playerComponent);
     }
 
     @Override
-    public void click(@NotNull PlayerComponent playerComponent,
-                      @NotNull ItemComponent<?> item, int slot) {
-        findButtonBySlot(slot).ifPresent(button -> {
-            if (button.getClickSound() != null) {
-                playerComponent.playSound(button.getClickSound());
+    public boolean click(@NotNull PlayerComponent playerComponent,
+                         int slot, @NotNull ItemComponent<?> item) {
+        return true;
+    }
+
+    @Override
+    public boolean clickPlayerInventory(@NotNull PlayerComponent playerComponent, int slot,
+                                        @NotNull ItemComponent<?> item, @NotNull ItemComponent<?> cursor) {
+        return true;
+    }
+
+    @NotNull
+    protected Map<Integer, ItemComponent<?>> applyFillerItem(@NotNull Map<Integer, ItemComponent<?>> items) {
+        if (this.fillerItem == null) {
+            return items;
+        }
+
+        for (int i = 0; i < this.size; i++) {
+            if (!items.containsKey(i)) {
+                items.put(i, this.fillerItem);
             }
-        });
-    }
-
-    @NotNull
-    public MenuButton createButton(@NotNull ConfigurationNode node, @NotNull String name, int slot,
-                                   @NotNull BiFunction<PlayerComponent, Integer, Map<Integer, ItemComponent<?>>> itemCreation) {
-        return createButton(node, name, new int[]{slot}, itemCreation);
-    }
-
-    @NotNull
-    public MenuButton createButton(@NotNull ConfigurationNode node, @NotNull String name, int[] slots,
-                                   @NotNull BiFunction<PlayerComponent, Integer, Map<Integer, ItemComponent<?>>> itemCreation) {
-        return MenuButtonImpl.create(node, name, slots, itemCreation);
+        }
+        return items;
     }
 
     @NotNull
@@ -105,6 +111,11 @@ public abstract class AbstractMenu implements Menu {
     @Override
     public @NotNull ConfigurationNode getNode() {
         return this.node;
+    }
+
+    @NotNull
+    protected ConfigurationNode getItemsNode() {
+        return this.node.getNode("items");
     }
 
     @Override
@@ -123,36 +134,31 @@ public abstract class AbstractMenu implements Menu {
     }
 
     @Override
+    public boolean playersCanMoveItems() {
+        return this.playersCanMoveItems;
+    }
+
+    @Override
     public @Nullable ItemComponent<?> getFillerItem() {
         return this.fillerItem;
     }
 
     @Override
-    public @NotNull Set<MenuButton> getButtons() {
-        return this.buttons;
+    public @NotNull Set<PlayerComponent> getViewers() {
+        return this.viewers;
     }
 
     @Override
-    public void putButton(@NotNull MenuButton button) {
-        this.buttons.add(button);
+    public boolean isViewing(@NotNull PlayerComponent playerComponent) {
+        return this.viewers.contains(playerComponent);
     }
 
     @Override
-    public void removeButton(@NotNull MenuButton button) {
-        this.buttons.remove(button);
-    }
+    public void setViewersInventoryItem(@NotNull PlayerComponent playerComponent, int slot, @Nullable ItemComponent<?> itemComponent) {
+        if (!this.viewers.contains(playerComponent)) {
+            return;
+        }
 
-    @Override
-    public @NotNull Optional<MenuButton> findButtonByName(@NotNull String name) {
-        return this.buttons.stream()
-                .filter(button -> button.getName().equalsIgnoreCase(name))
-                .findFirst();
-    }
-
-    @Override
-    public @NotNull Optional<MenuButton> findButtonBySlot(int slot) {
-        return this.buttons.stream()
-                .filter(button -> button.containsSlot(slot))
-                .findFirst();
+        playerComponent.setOpenedInventoryItem(slot, itemComponent);
     }
 }

@@ -1,17 +1,35 @@
 package net.code4me.anoduels.bukkit.commands.admin;
 
-import com.github.kafeintr.commands.common.command.BaseCommand;
-import com.github.kafeintr.commands.common.command.annotation.*;
+import co.aikar.commands.BaseCommand;
+import co.aikar.commands.annotation.*;
 import net.code4me.anoduels.api.component.PlayerComponent;
 import net.code4me.anoduels.common.config.key.ConfigKeys;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import org.jetbrains.annotations.NotNull;
 
-@CommandAlias("duel-admin|dueladmin")
-@CommandDescription("Duel Admin Commands")
+@CommandAlias("duel-admin")
+@Description("Duel Admin Commands")
 @CommandPermission("anoduels.admin")
-public final class DuelAdminCommand implements BaseCommand {
-    @NoArgsCommand
-    public void executeNoArgs(@NotNull PlayerComponent sender) {
+public final class DuelAdminCommand extends BaseCommand {
+    @NotNull
+    private final DuelPlugin plugin;
+
+    public DuelAdminCommand(@NotNull DuelPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    @Default
+    @HelpCommand
+    public void help(@NotNull PlayerComponent sender) {
         sender.sendMessage(ConfigKeys.Language.ADMIN_HELP.getValue());
+    }
+
+    @Subcommand("reload")
+    @Description("Reloads the plugin")
+    public void reload(@NotNull PlayerComponent sender) {
+        this.plugin.loadConfigs();
+        this.plugin.getMenuManager().reload();
+
+        sender.sendMessage(ConfigKeys.Language.RELOADED.getValue());
     }
 }

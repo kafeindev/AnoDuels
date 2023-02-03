@@ -30,68 +30,72 @@ public final class LocationComponent {
     public static final net.code4me.anoduels.api.serializer.Serializer<LocationComponent, String> SERIALIZER = new Serializer();
 
     @NotNull
-    public static LocationComponent of(@NotNull String worldName, int x, int y, int z) {
-        return new LocationComponent(worldName, x, y, z);
+    public static LocationComponent of(@NotNull String worldName, double x, double y, double z, float yaw, float pitch) {
+        return new LocationComponent(worldName, x, y, z, yaw, pitch);
     }
 
-    /**
-     * The world name of the location.
-     */
     @NotNull
     private final String worldName;
 
-    /**
-     * The x component of the location.
-     */
-    private final int x;
+    private final double x;
 
-    /**
-     * The y component of the location.
-     */
-    private final int y;
+    private final double y;
 
-    /**
-     * The z component of the location.
-     */
-    private final int z;
+    private final double z;
 
-    private LocationComponent(@NotNull String worldName, int x, int y, int z) {
+    private final float yaw;
+
+    private final float pitch;
+
+    private LocationComponent(@NotNull String worldName, double x, double y, double z, float yaw, float pitch) {
         this.worldName = worldName;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.yaw = yaw;
+        this.pitch = pitch;
     }
 
     @NotNull
     public String getWorldName() {
-        return worldName;
+        return this.worldName;
     }
 
-    public int getX() {
-        return x;
+    public double getX() {
+        return this.x;
     }
 
-    public int getY() {
-        return y;
+    public double getY() {
+        return this.y;
     }
 
-    public int getZ() {
-        return z;
+    public double getZ() {
+        return this.z;
+    }
+
+    public float getYaw() {
+        return this.yaw;
+    }
+
+    public float getPitch() {
+        return this.pitch;
     }
 
     private static class Serializer implements net.code4me.anoduels.api.serializer.Serializer<LocationComponent, String> {
         @Override
         public @NotNull String serialize(@NotNull LocationComponent locationComponent) {
-            return String.format("%s;%d;%d;%d", locationComponent.worldName,
-                    locationComponent.x, locationComponent.y, locationComponent.z);
+            return locationComponent.getWorldName() + ";" +
+                    locationComponent.getX() + ";" + locationComponent.getY() + ";" + locationComponent.getZ() + ";" +
+                    locationComponent.getYaw() + ";" + locationComponent.getPitch();
         }
 
         @Override
         public @NotNull LocationComponent deserialize(@NotNull String serialized) {
             String[] split = serialized.split(";");
 
-            return new LocationComponent(split[0],
-                    Integer.parseInt(split[1]), Integer.parseInt(split[2]), Integer.parseInt(split[3]));
+            return LocationComponent.of(split[0],
+                    Double.parseDouble(split[1]), Double.parseDouble(split[2]), Double.parseDouble(split[3]),
+                    Float.parseFloat(split[4]), Float.parseFloat(split[5]));
         }
     }
 }

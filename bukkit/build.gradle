@@ -17,6 +17,8 @@ dependencies {
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
+    implementation 'io.papermc:paperlib:1.0.8'
+    implementation 'co.aikar:acf-paper:0.5.1-SNAPSHOT'
     implementation 'com.github.cryptomorin:XSeries:9.2.0'
     implementation 'de.tr7zw:item-nbt-api-plugin:2.11.1'
 
@@ -34,7 +36,15 @@ shadowJar {
     archiveFileName = 'AnoDuels [' + project.version + '].jar'
 
     relocate 'ninja.leaping.configurate', project.group + '.libs.configurate'
+
+    relocate 'net.kyori', project.group + '.libs.kyori'
+    relocate 'io.papermc', project.group + '.libs.papermc'
+
+    relocate 'co.aikar.commands', project.group + '.libs.commands'
+    relocate 'co.aikar.locales', project.group + '.libs.locales'
+
     relocate 'com.cryptomorin.xseries', project.group + '.libs.xseries'
+    relocate 'de.tr7zw', project.group + '.libs.item-nbt-api'
 }
 
 artifacts {

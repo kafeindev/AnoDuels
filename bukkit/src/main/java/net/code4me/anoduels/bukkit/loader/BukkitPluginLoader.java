@@ -1,7 +1,7 @@
 package net.code4me.anoduels.bukkit.loader;
 
 import net.code4me.anoduels.bukkit.BukkitDuelPlugin;
-import net.code4me.anoduels.common.plugin.DuelPlugin;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 

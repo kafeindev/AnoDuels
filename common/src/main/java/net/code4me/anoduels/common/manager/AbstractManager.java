@@ -28,18 +28,25 @@ import net.code4me.anoduels.api.manager.Manager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 public abstract class AbstractManager<K, V> implements Manager<K, V> {
-    protected final Map<K, V> map = new HashMap<>();
+    protected final Map<K, V> map = new ConcurrentHashMap<>();
+
+    @Override
+    public @NotNull Map<K, V> getMap() {
+        return this.map;
+    }
 
     @Override
     public @NotNull Collection<V> findAll() {
-        return map.values();
+        return this.map.values();
     }
 
     @Override
     public @NotNull Optional<V> find(@NotNull K key) {
-        return Optional.ofNullable(map.get(key));
+        return Optional.ofNullable(this.map.get(key));
     }
 
     @Override
@@ -50,28 +57,33 @@ public abstract class AbstractManager<K, V> implements Manager<K, V> {
 
     @Override
     public V put(@NotNull K key, @NotNull V value) {
-        map.put(key, value);
+        this.map.put(key, value);
 
         return value;
     }
 
     @Override
     public void remove(@NotNull K key) {
-        map.remove(key);
+        this.map.remove(key);
+    }
+
+    @Override
+    public boolean removeIf(@NotNull Predicate<? super V> filter) {
+        return this.map.values().removeIf(filter);
     }
 
     @Override
     public void clear() {
-        map.clear();
+        this.map.clear();
     }
 
     @Override
     public boolean contains(@NotNull K key) {
-        return map.containsKey(key);
+        return this.map.containsKey(key);
     }
 
     @Override
     public int size() {
-        return map.size();
+        return this.map.size();
     }
 }

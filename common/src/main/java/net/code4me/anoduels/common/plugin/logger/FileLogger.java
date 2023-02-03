@@ -25,7 +25,7 @@
 package net.code4me.anoduels.common.plugin.logger;
 
 import net.code4me.anoduels.common.config.misc.FileProcessor;
-import net.code4me.anoduels.common.plugin.DuelPlugin;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

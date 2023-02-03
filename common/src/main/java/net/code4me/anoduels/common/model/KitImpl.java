@@ -1,8 +1,8 @@
 package net.code4me.anoduels.common.model;
 
-import com.google.common.reflect.TypeToken;
 import net.code4me.anoduels.api.component.ItemComponent;
 import net.code4me.anoduels.api.model.Kit;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.jetbrains.annotations.NotNull;
@@ -15,12 +15,12 @@ public final class KitImpl implements Kit {
     }
 
     @NotNull
-    public static Kit fromNode(@NotNull ConfigurationNode node) {
+    public static Kit fromNode(@NotNull DuelPlugin plugin, @NotNull ConfigurationNode node) {
         String name = node.getNode("name").getString();
 
         try {
             Kit kit = create(name);
-            kit.initialize(node);
+            kit.initialize(plugin, node);
 
             return kit;
         } catch (ObjectMappingException e) {
@@ -32,23 +32,36 @@ public final class KitImpl implements Kit {
     private final String name;
 
     private ItemComponent<?> icon;
-    private ItemComponent<?>[] contents;
+    private ItemComponent<?>[] items;
+    private ItemComponent<?>[] armors;
 
     private KitImpl(@NotNull String name) {
         this.name = name;
     }
 
     @Override
-    public void initialize(@NotNull ConfigurationNode node) throws ObjectMappingException {
-        this.icon = node.getNode("icon").getValue(TypeToken.of(ItemComponent.class));
-        this.contents = node.getNode("contents").getList(TypeToken.of(ItemComponent.class)).toArray(new ItemComponent<?>[0]);
+    public void initialize(@NotNull DuelPlugin plugin, @NotNull ConfigurationNode node) throws ObjectMappingException {
+        if (!node.getNode("icon").isEmpty()) {
+            this.icon = plugin.getItemFactory().fromBase64(node.getNode("icon").getString());
+        }
+
+        if (!node.getNode("items").isEmpty()) {
+            this.items = plugin.getItemFactory().itemArrayFromBase64(node.getNode("items").getString());
+            this.armors = plugin.getItemFactory().itemArrayFromBase64(node.getNode("armors").getString());
+        }
     }
 
     @Override
-    public void save(@NotNull ConfigurationNode node) throws ObjectMappingException {
+    public void save(@NotNull DuelPlugin plugin, @NotNull ConfigurationNode node) throws ObjectMappingException {
         node.getNode("name").setValue(this.name);
-        node.getNode("icon").setValue(TypeToken.of(ItemComponent.class), this.icon);
-        node.getNode("contents").setValue(TypeToken.of(ItemComponent[].class), this.contents);
+
+        if (this.icon != null) {
+            node.getNode("icon").setValue(plugin.getItemFactory().toBase64(this.icon));
+        }
+        if (this.items != null) {
+            node.getNode("items").setValue(plugin.getItemFactory().toBase64ViaArray(this.items));
+            node.getNode("armors").setValue(plugin.getItemFactory().toBase64ViaArray(this.armors));
+        }
     }
 
     @Override
@@ -67,12 +80,18 @@ public final class KitImpl implements Kit {
     }
 
     @Override
-    public @Nullable ItemComponent<?>[] getContents() {
-        return this.contents;
+    public @Nullable ItemComponent<?>[] getItems() {
+        return this.items;
     }
 
     @Override
-    public void setContents(@NotNull ItemComponent<?>[] contents) {
-        this.contents = contents;
+    public @Nullable ItemComponent<?>[] getArmors() {
+        return armors;
+    }
+
+    @Override
+    public void setContents(@NotNull ItemComponent<?>[] items, @NotNull ItemComponent<?>[] armors) {
+        this.items = items;
+        this.armors = armors;
     }
 }

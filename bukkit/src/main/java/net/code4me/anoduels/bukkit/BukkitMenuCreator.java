@@ -1,10 +1,11 @@
 package net.code4me.anoduels.bukkit;
 
 import net.code4me.anoduels.api.model.menu.Menu;
+import net.code4me.anoduels.bukkit.util.Colorizer;
 import net.code4me.anoduels.common.config.injection.ResourceInjector;
 import net.code4me.anoduels.common.config.misc.NodeProcessor;
 import net.code4me.anoduels.common.managers.MenuManagerImpl;
-import net.code4me.anoduels.common.plugin.DuelPlugin;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import ninja.leaping.configurate.ConfigurationNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ public final class BukkitMenuCreator extends MenuManagerImpl.MenuCreator {
     @Override
     public @NotNull Menu create(@NotNull MenuManagerImpl.MenuType type) {
         return CompletableFuture.supplyAsync(() -> {
-            String fileName = type.getName() + "-menu.yml";
+            String fileName = type.getName() + "_menu.yml";
             Path path = parentDirectory.resolve(fileName);
             if (!Files.exists(path)) {
                 resourceInjector.inject(path, type.getClazz(), "menus/" + fileName);
@@ -38,7 +39,7 @@ public final class BukkitMenuCreator extends MenuManagerImpl.MenuCreator {
                 Menu menu = type.getClazz()
                         .getConstructor(DuelPlugin.class, ConfigurationNode.class)
                         .newInstance(plugin, node);
-                menu.initialize();
+                menu.initialize(Colorizer::colorize);
 
                 return menu;
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException |

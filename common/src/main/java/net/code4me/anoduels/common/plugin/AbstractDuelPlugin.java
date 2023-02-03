@@ -24,37 +24,40 @@
 
 package net.code4me.anoduels.common.plugin;
 
-import com.github.kafeintr.commands.common.command.CommandManager;
+import co.aikar.commands.CommandManager;
 import net.code4me.anoduels.api.component.ItemComponent;
+import net.code4me.anoduels.api.component.PlayerComponent;
 import net.code4me.anoduels.api.managers.*;
+import net.code4me.anoduels.api.managers.MatchManager;
 import net.code4me.anoduels.api.model.Config;
 import net.code4me.anoduels.api.model.logger.Logger;
+import net.code4me.anoduels.api.model.plugin.DuelPlugin;
+import net.code4me.anoduels.api.task.TaskScheduler;
 import net.code4me.anoduels.common.config.ConfigManagerImpl;
 import net.code4me.anoduels.common.config.key.ConfigKeys;
 import net.code4me.anoduels.common.config.misc.FileProcessor;
 import net.code4me.anoduels.common.managers.*;
 import net.code4me.anoduels.common.managers.MenuManagerImpl;
+import net.code4me.anoduels.common.managers.MatchManagerImpl;
 import net.code4me.anoduels.common.plugin.logger.FileLogger;
-import net.code4me.anoduels.common.plugin.scheduler.concurrent.ConcurrentTaskScheduler;
-import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.platform.AudienceProvider;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractDuelPlugin implements DuelPlugin {
-    private ConcurrentTaskScheduler taskScheduler;
-    private Audience audience;
+    private TaskScheduler taskScheduler;
+    private AudienceProvider audienceProvider;
     private Logger logger;
 
     private ConfigManager configManager;
-    private CommandManager<String> commandManager;
+    private CommandManager commandManager;
     private UserManager userManager;
     private MenuManager menuManager;
     private InviteManager inviteManager;
-    private QueueManager queueManager;
-    private HistoryManager historyManager;
     private MatchManager matchManager;
     private KitManager kitManager;
     private ArenaManager arenaManager;
-    private ItemComponent.ItemCreator itemCreator;
+    private ItemComponent.ItemFactory<?> itemFactory;
+    private PlayerComponent.PlayerFactory playerFactory;
 
     @Override
     public void load() {
@@ -66,31 +69,41 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
 
     @Override
     public void enable() {
-        this.audience = createAudience();
+        this.audienceProvider = createAudience();
 
+        getLogger().info("Loading configs...");
         this.configManager = new ConfigManagerImpl(getDataPath());
         loadConfigs();
 
-        this.commandManager = createCommandManager();
-        registerCommands();
+        this.itemFactory = createItemFactory();
+        this.playerFactory = createPlayerFactory();
 
-        this.itemCreator = createItemCreator();
-
+        getLogger().info("Loading menus...");
         this.menuManager = new MenuManagerImpl(this, createMenuCreator());
         this.menuManager.initialize();
 
+        getLogger().info("Loading kits...");
         this.kitManager = new KitManagerImpl(this);
         this.kitManager.initialize();
 
+        getLogger().info("Loading arenas...");
         this.arenaManager = new ArenaManagerImpl(this);
         this.arenaManager.initialize();
 
-        this.userManager = new UserManagerImpl();
-        this.inviteManager = new InviteManagerImpl(this);
-        this.queueManager = new QueueManagerImpl(this);
-        this.historyManager = new HistoryManagerImpl();
-        this.matchManager = new MatchManagerImpl();
+        getLogger().info("Initializing user manager...");
+        this.userManager = new UserManagerImpl(this);
 
+        getLogger().info("Initializing match manager...");
+        this.matchManager = new MatchManagerImpl(this);
+        this.matchManager.initialize();
+
+        this.inviteManager = new InviteManagerImpl(this);
+
+        getLogger().info("Registering commands...");
+        this.commandManager = createCommandManager();
+        registerCommands();
+
+        getLogger().info("Registering listeners...");
         registerListeners();
     }
 
@@ -98,8 +111,11 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
     public void disable() {
         this.taskScheduler.shutdownExecutor();
 
-        this.arenaManager.shutdown();
-        this.kitManager.shutdown();
+        getLogger().info("Shutting down match manager...");
+        this.matchManager.shutdown();
+
+        getLogger().info("Shutting down user manager...");
+        this.userManager.shutdown();
 
         getLogger().close();
         this.taskScheduler.shutdownWorkerPool();
@@ -107,15 +123,13 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
 
     @Override
     public void loadConfigs() {
-        getLogger().info("Loading configs...");
-
         //settings
-        Config settingsConfig = this.configManager.create("settings", "settings.yml", getClass(), "settings.yml");
+        Config settingsConfig = this.configManager.create("settings", "settings.yml", "settings.yml");
         this.configManager.injectKeys(settingsConfig, ConfigKeys.Settings.class, true);
         this.configManager.put("settings", settingsConfig);
 
         //language
-        Config languageConfig = this.configManager.create("language", "language.yml", getClass(), "language.yml");
+        Config languageConfig = this.configManager.create("language", "language.yml", "language.yml");
         this.configManager.injectKeys(languageConfig, ConfigKeys.Language.class, true);
         this.configManager.put("language", languageConfig);
     }
@@ -125,16 +139,19 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
     protected abstract void registerListeners();
 
     @NotNull
-    protected abstract ConcurrentTaskScheduler createTaskScheduler();
+    protected abstract TaskScheduler createTaskScheduler();
 
     @NotNull
-    protected abstract Audience createAudience();
+    protected abstract AudienceProvider createAudience();
 
     @NotNull
-    protected abstract CommandManager<String> createCommandManager();
+    protected abstract CommandManager createCommandManager();
 
     @NotNull
-    protected abstract ItemComponent.ItemCreator createItemCreator();
+    protected abstract ItemComponent.ItemFactory<?> createItemFactory();
+
+    @NotNull
+    protected abstract PlayerComponent.PlayerFactory createPlayerFactory();
 
     @NotNull
     protected abstract MenuManagerImpl.MenuCreator createMenuCreator();
@@ -143,13 +160,13 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
     protected abstract java.util.logging.Logger getParentLogger();
 
     @Override
-    public @NotNull ConcurrentTaskScheduler getTaskScheduler() {
+    public @NotNull TaskScheduler getTaskScheduler() {
         return this.taskScheduler;
     }
 
     @Override
-    public @NotNull Audience getAudience() {
-        return this.audience;
+    public @NotNull AudienceProvider getAudience() {
+        return this.audienceProvider;
     }
 
     @Override
@@ -163,7 +180,7 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
     }
 
     @Override
-    public @NotNull CommandManager<String> getCommandManager() {
+    public @NotNull CommandManager getCommandManager() {
         return this.commandManager;
     }
 
@@ -183,18 +200,8 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
     }
 
     @Override
-    public @NotNull QueueManager getQueueManager() {
-        return this.queueManager;
-    }
-
-    @Override
     public @NotNull MatchManager getMatchManager() {
         return this.matchManager;
-    }
-
-    @Override
-    public @NotNull HistoryManager getHistoryManager() {
-        return this.historyManager;
     }
 
     @Override
@@ -208,7 +215,12 @@ public abstract class AbstractDuelPlugin implements DuelPlugin {
     }
 
     @Override
-    public @NotNull ItemComponent.ItemCreator getItemCreator() {
-        return this.itemCreator;
+    public @NotNull ItemComponent.ItemFactory<?> getItemFactory() {
+        return this.itemFactory;
+    }
+
+    @Override
+    public @NotNull PlayerComponent.PlayerFactory getPlayerFactory() {
+        return this.playerFactory;
     }
 }

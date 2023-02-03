@@ -24,7 +24,7 @@
 
 package net.code4me.anoduels.common.util;
 
-import net.code4me.anoduels.api.model.Pair;
+import net.code4me.anoduels.api.model.pair.Pair;
 
 public final class PairFactory<L, R> implements Pair<L, R> {
     public static <L, R> PairFactory<L, R> of(L left, R right) {
