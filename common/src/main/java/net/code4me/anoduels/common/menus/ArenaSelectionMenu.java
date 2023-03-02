@@ -36,8 +36,12 @@ public final class ArenaSelectionMenu extends AbstractMenu {
                 return;
             }
 
-            ItemComponent<?> itemComponent = plugin.getItemFactory()
-                    .fromNode(getItemsNode().getNode("arena_display"), ImmutableMap.of(
+            ItemComponent<?> itemComponent = category.getIcon().clone()
+                    .setName(getItemsNode().getNode("arena_display"), ImmutableMap.of(
+                            "%category_icon%", category.getIcon().getMaterial(),
+                            "%category_name%", category.getName(),
+                            "%category_description%", category.getDescription()))
+                    .setLore(getItemsNode().getNode("arena_lore"), ImmutableMap.of(
                             "%category_icon%", category.getIcon().getMaterial(),
                             "%category_name%", category.getName(),
                             "%category_description%", category.getDescription()))

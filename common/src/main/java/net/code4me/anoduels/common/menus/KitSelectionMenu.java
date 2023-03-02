@@ -42,8 +42,11 @@ public final class KitSelectionMenu extends AbstractMenu {
                 return;
             }
 
-            ItemComponent<?> itemComponent = plugin.getItemFactory()
-                    .fromNode(itemsNode.getNode("kit_display"), ImmutableMap.of(
+            ItemComponent<?> itemComponent = icon.clone()
+                    .setName(itemsNode.getNode("kit_display"), ImmutableMap.of(
+                            "%kit_name%", kit.getName(),
+                            "%kit_icon%", icon.getMaterial()))
+                    .setLore(itemsNode.getNode("kit_lore"), ImmutableMap.of(
                             "%kit_name%", kit.getName(),
                             "%kit_icon%", icon.getMaterial()))
                     .setNbt("kit", kit.getName())

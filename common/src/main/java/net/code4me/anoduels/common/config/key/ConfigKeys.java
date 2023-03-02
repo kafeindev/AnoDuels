@@ -103,7 +103,7 @@ public final class ConfigKeys {
         public static final ConfigKey<String> ADMIN_ARENA_CREATE_CATEGORY = ConfigKey.create("&aArena category created.", "language", "admin", "arena", "create-category-message");
         public static final ConfigKey<String> ADMIN_ARENA_DELETE = ConfigKey.create("&aArena deleted.", "language", "admin", "arena", "delete-message");
         public static final ConfigKey<String> ADMIN_ARENA_DELETE_CATEGORY = ConfigKey.create("&aArena category deleted.", "language", "admin", "arena", "delete-category-message");
-        public static final ConfigKey<List<String>> ADMIN_ARENA_LIST = ConfigKey.create(ImmutableList.of(), "language", "admin", "arena", "list-message");
+        public static final ConfigKey<String> ADMIN_ARENA_LIST = ConfigKey.create("", "language", "admin", "arena", "list-message");
         public static final ConfigKey<String> ADMIN_ARENA_SET_SPAWN = ConfigKey.create("&aSpawn set.", "language", "admin", "arena", "set-spawn-message");
         public static final ConfigKey<String> ADMIN_ARENA_TELEPORT = ConfigKey.create("&aTeleported to arena.", "language", "admin", "arena", "teleport-message");
         public static final ConfigKey<String> ADMIN_ARENA_SET_BOUNDS = ConfigKey.create("&aBounds set.", "language", "admin", "arena", "set-bounds-message");

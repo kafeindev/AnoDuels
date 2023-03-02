@@ -533,4 +533,10 @@ public final class BukkitItemComponent implements ItemComponent<ItemStack> {
         }
         return this;
     }
+
+    @Override
+    public @NotNull ItemComponent<ItemStack> clone() {
+        merge();
+        return BukkitItemComponent.fromItemStack(this.itemStack.clone());
+    }
 }

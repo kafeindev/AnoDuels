@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface ItemComponent<I> {
+public interface ItemComponent<I> extends Cloneable {
     @Nullable I getHandle();
 
     @Nullable I getHandle(boolean merge);
@@ -153,6 +153,8 @@ public interface ItemComponent<I> {
     @NotNull ItemComponent<I> setNbt(@NotNull ConfigurationNode node);
 
     @NotNull ItemComponent<I> merge();
+
+    @NotNull ItemComponent<I> clone();
 
     interface ItemFactory<I> {
         @NotNull

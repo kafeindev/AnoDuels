@@ -7,7 +7,6 @@ import net.code4me.anoduels.api.component.PlayerComponent;
 import net.code4me.anoduels.api.model.match.Match;
 import net.code4me.anoduels.api.model.match.MatchState;
 import net.code4me.anoduels.api.model.match.player.MatchPlayer;
-import net.code4me.anoduels.api.model.match.reason.MatchFinishReason;
 import net.code4me.anoduels.api.model.plugin.DuelPlugin;
 import net.code4me.anoduels.common.config.key.ConfigKeys;
 import net.code4me.anoduels.common.managers.MenuManagerImpl;
